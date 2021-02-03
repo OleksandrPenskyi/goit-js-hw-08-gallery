@@ -37,7 +37,9 @@ ulListRef.insertAdjacentHTML('afterbegin', listOfimg);
 ulListRef.addEventListener('click', event => {
   event.preventDefault(); // запрет браузеру на стандартные действия, чтобы не переходил по ссылке кликнув на pic
   const target = event.target;
-  // console.log(target);
+
+  // получение url большого изображения
+  // console.log(target.dataset.source);
 
   // добавляем class="is-open" для бэкдропа
   if (target.nodeName === 'IMG') {
