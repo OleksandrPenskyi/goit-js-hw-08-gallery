@@ -3,12 +3,12 @@ import pics from './gallery-items.js';
 const ulListRef = document.querySelector('.gallery.js-gallery'); // Ссылка на коллекцию UL
 const backDropRef = document.querySelector('.js-lightbox'); // Ссылка на бэкдроп
 const originalImgRef = document.querySelector('.lightbox__image'); // Ссылка на img для оригинальной картинки
-const closeBtnRef = document.querySelector('button[data-action="close-lightbox"]'); // Ссылка кнопки-закрытия
-const overlayRef = document.querySelector('.lightbox__overlay'); // Ссылка на серый фон (оверлей)
+const closeModalBtnRef = document.querySelector('button[data-action="close-lightbox"]'); // Ссылка кнопки-закрытия
+const overlayClickRef = document.querySelector('.lightbox__overlay'); // Ссылка на серый фон (оверлей)
 
 const listOfLinks = pics.map(pic => pic.original); // массив ссылок на оригиналбные (увеличенные) картинки
 
-// Перебираем массив pics для получения строки-li с нужными атрибутами
+// Перебираем массив pics для получения строки-li с нужными атрибутами для создания html динамически
 const listOfimg = pics.reduce((accum, pic, idx) => {
   return (
     accum +
@@ -29,36 +29,35 @@ const listOfimg = pics.reduce((accum, pic, idx) => {
 </li>`
   );
 }, '');
-
-// добавляем в нашу коллекцию UL - строки
+// Создаем динамически разметку HTML, добавляем в нашу коллекцию UL - строки
 ulListRef.insertAdjacentHTML('afterbegin', listOfimg);
 
-// слушатель на бекдроп по клику
-ulListRef.addEventListener('click', event => {
+ulListRef.addEventListener('click', onOpenModal); // Открытие модалки по клику на img
+closeModalBtnRef.addEventListener('click', onCloseModal); // Закрытие модалки по клику на кнопку
+overlayClickRef.addEventListener('click', onCloseModal); // Закрытие модалки по клику на Оверлей
+
+//! ф-я открытия модалки
+function onOpenModal(event) {
   event.preventDefault(); // запрет браузеру на стандартные действия, чтобы не переходил по ссылке кликнув на pic
   const target = event.target;
-
-  // получение url большого изображения
-  // console.log(target.dataset.source);
 
   // добавляем class="is-open" для бэкдропа
   if (target.nodeName === 'IMG') {
     // добавление класса для открытия бэкдропа
     backDropRef.classList.add('is-open');
     // добавляем слушателя на закрытие бэкдропа по Escape
-    window.addEventListener('keydown', onClickEscape);
+    window.addEventListener('keydown', onCloseModal);
+    // Подмена значения src и alt у <img>
+    originalImgRef.src = target.dataset.source;
+    originalImgRef.alt = target.alt;
   }
 
-  // Подмена значения src у <img>
-  if (target.nodeName === 'IMG') {
-    originalImgRef.src = target.getAttribute('data-source');
-    originalImgRef.alt = target.getAttribute('alt');
-  }
-
-  // todo клацаем по кнопкам влево / вправо по галерее
   let activeIdx = +event.target.getAttribute('data-idx'); // таргет на клацнутом єлементе, то-есть на img
-  // console.log('Начальный индекс:', activeIdx); //!
-
+  // console.log(activeIdx);
+  galleryListing(activeIdx);
+}
+// !ф-я перелистывания модалки
+function galleryListing(activeIdx) {
   window.addEventListener('keydown', event => {
     if (event.code === 'ArrowRight') {
       activeIdx += 1;
@@ -80,36 +79,22 @@ ulListRef.addEventListener('click', event => {
       }
     }
   });
-});
-
-// Закрытие по клику по оверлею
-overlayRef.addEventListener('click', event => {
-  if (event.target === event.currentTarget) {
-    backDropRef.classList.remove('is-open');
-    closePic(); // ф-я очистки значения атрибута src
-    window.removeEventListener('keydown', onClickEscape);
-  }
-});
-
-// Закрытие по клику по кнопке
-closeBtnRef.addEventListener('click', () => {
-  backDropRef.classList.remove('is-open');
-  closePic(); // ф-я очистки значения атрибута src
-  window.removeEventListener('keydown', onClickEscape);
-});
-
-// ф-я для закрытия по Ескейпу
-function onClickEscape(event) {
-  if (event.code === 'Escape') {
-    // console.log('нажал ЕСКЕЙП');
-    backDropRef.classList.remove('is-open');
-    closePic(); // ф-я очистки значения атрибута src
-    window.removeEventListener('keydown', onClickEscape);
+}
+// !общий метод для закрытия модалки
+function onCloseModal(event) {
+  // закрытие по ескейпу или клику на оверлей
+  if (event.code === 'Escape' || event.target === event.currentTarget) {
+    closeModal();
+    clearPicAttributes();
   }
 }
-
-// ф-я очистки значения атрибута src элемента img.lightbox__image
-function closePic() {
+// !ф-я закрытия модалки
+function closeModal() {
+  backDropRef.classList.remove('is-open');
+  window.removeEventListener('keydown', onCloseModal);
+}
+// !ф-я очистки значения атрибута src элемента img.lightbox__image
+function clearPicAttributes() {
   originalImgRef.src = '';
   originalImgRef.alt = '';
 }
